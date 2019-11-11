@@ -1,0 +1,14 @@
+/*! 每段代码加上注释 */
+#title1 {
+  background: red;
+}
+
+#title2 {
+  width: 200px;
+  height: 200px;
+  background: url(http://127.0.0.1:1717//images/770f7c8ca0bb95613c6f2fa9bc100a3a.jpg);
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}

@@ -1,0 +1,9 @@
+#title1{
+    background: red;
+}
+#title2{
+    width: 200px;
+    height:200px;
+    background: url('../images/P3-背景.jpg');
+    display: flex;
+}
