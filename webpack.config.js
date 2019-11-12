@@ -7,9 +7,11 @@ const purifyCssPlugin = require('purifycss-webpack')
 const type=process.env.type
 const webpack = require('webpack')
 const copyWebpackPlugin = require('copy-webpack-plugin')
-// const cleanWebpackPlugin= require('clean-webpack-plugin')
+const {CleanWebpackPlugin} = require('clean-webpack-plugin')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin")
 var website={
-    publicPath:'http://127.0.0.1:1717/'
+    publicPath:''
 }
 module.exports = {
     devtool:'eval-source-map',
@@ -28,12 +30,21 @@ module.exports = {
     },
     output:{
         path:path.resolve(__dirname,'dist'),
-        filename:'[name].js',
+        filename:'[name]_[hash].js',
         publicPath:website.publicPath
 
     },
+    resolve: {
+        alias: {
+          'vue$': 'vue/dist/vue.esm.js'
+        }
+    },
     module:{
         rules:[
+            {
+                test:/\.vue$/,
+                use:['vue-loader']
+            },
             {
                 test:/\.css$/,
                 use:extractText.extract({
@@ -45,6 +56,7 @@ module.exports = {
                         {
                             loader: "postcss-loader",
                             options: {
+                                minimize: true,
                                 plugins: [
                                     require("autoprefixer") ({
                                         browsers: ['last 10 Chrome versions', 'last 5 Firefox versions', 'Safari >= 6', 'ie > 8']
@@ -94,6 +106,13 @@ module.exports = {
     },
     optimization: {
         splitChunks: {
+            chunks: 'all',
+            minSize: 30000,
+            minChunks: 1,
+            maxAsyncRequests: 2,
+            maxInitialRequests: 2,
+            automaticNameDelimiter: '~',
+            name: true,
             cacheGroups: {
                 vendor: {   // 抽离第三方插件
                     test: /node_modules/,   // 指定是node_modules下的第三方包
@@ -102,11 +121,11 @@ module.exports = {
                     // 设置优先级，防止和自定义的公共代码提取时被覆盖，不进行打包
                     priority: 10    
                 },
-                utils: { // 抽离自己写的公共代码，utils这个名字可以随意起
-                    chunks: 'initial',
-                    name: 'utils',  // 任意命名
-                    minSize: 0    // 只要超出0字节就生成一个新包
-                }
+                // utils: { // 抽离自己写的公共代码，utils这个名字可以随意起
+                //     chunks: 'initial',
+                //     name: 'utils',  // 任意命名
+                //     minSize: 0    // 只要超出0字节就生成一个新包
+                // }
             }
         }
     },
@@ -116,8 +135,19 @@ module.exports = {
                 removeAttributeQuotes:true
             },
             hash:true,
-            template:'./src/index.html'
+            // filename:'index.html',
+            template:'./src/index.html',
+            // chunks:['entry1','entry2','jquery']
         }),
+        // new htmlPlugin({
+        //     minify:{
+        //         removeAttributeQuotes:true
+        //     },
+        //     hash:true,
+        //     filename:'h2.html',
+        //     template:'./src/h2.html',
+        //     chunks:['entry2','jquery']
+        // }),
         new extractText('css/[name].css'),
         // new webpack.optimization.minimize(),
         new purifyCssPlugin({
@@ -131,12 +161,25 @@ module.exports = {
             from:path.join(__dirname,'src/public'),
             to:'./public'
         }]),
-        // new cleanWebpackPlugin()
+        new CleanWebpackPlugin(),
+        new VueLoaderPlugin(),
+        new OptimizeCssAssetsPlugin({
+            assetNameRegExp:/\.css$/g,
+            cssProcessor:require("cssnano"),
+            cssProcessorPluginOptions:{
+              preset:['default',{discardComments:{removeAll:true}}]
+            },
+            canPrint:true
+          })
+          //压缩css
+       
     ],
     devServer:{
         contentBase:path.resolve(__dirname,'dist'),
         host:'localhost',
         compress:true,
         port:1717
-    }
+    },
+    // mode:'development'
+    mode:'production'
 }
