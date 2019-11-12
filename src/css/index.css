@@ -7,3 +7,32 @@
     background: url('../images/P3-背景.jpg');
     display: flex;
 }
+.trangle{
+    width:0;
+    height:0;
+    /* border-top: 34.64px solid red; */
+    border-bottom: 34.64px solid red;
+    border-left:20px solid green;
+    border-right:20px solid yellow;
+
+}
+.text{
+    width:200px;
+    height:200px;
+    border:1px solid #000;
+    border-radius: 2px;
+    padding:20px;
+    box-sizing: border-box;
+    background: red;
+    outline-offset:-10px ;
+    outline-width: 10px;
+    outline-style:solid;
+	outline-color:#fff; 
+    /* background-origin:content-box; */
+    
+}
+/* .text::before{
+    width:20px;
+    height:20px;
+    content: 'ee';
+} */
