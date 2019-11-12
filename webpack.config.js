@@ -1,19 +1,27 @@
 const path = require('path')
+const webpack = require('webpack')
+// 用于打包html 到dist目录，并引入相关js
 const htmlPlugin = require('html-webpack-plugin')
+//压缩js
 const uglify = require('uglifyjs-webpack-plugin') 
+// 分离css文件
 const extractText = require('extract-text-webpack-plugin')
 const glob = require('glob')
+//tree shaking 过滤未使用css及js代码
 const purifyCssPlugin = require('purifycss-webpack')
-const type=process.env.type
-const webpack = require('webpack')
+//复制指定静态文件到dist目录下
 const copyWebpackPlugin = require('copy-webpack-plugin')
+//打包前清除 dist文件夹内的部分
 const {CleanWebpackPlugin} = require('clean-webpack-plugin')
+//处理.vue 文件的loader
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
+//压缩css js文件
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin")
 var website={
     publicPath:''
 }
 module.exports = {
+    //开发环境下开启的 方便定位到源文件内容
     devtool:'eval-source-map',
     watchOptions:{
         //检测修改的时间，以毫秒为单位
@@ -79,7 +87,7 @@ module.exports = {
             },
             {
                 test:/\.(htm|html)$/i,
-                use:['html-withimg-loader']
+                use:['html-withimg-loader']//用于处理html内引入图片
             },
             {
                 test:/\.less$/,
@@ -105,12 +113,13 @@ module.exports = {
         ]
     },
     optimization: {
+        //公共部分抽离
         splitChunks: {
             chunks: 'all',
             minSize: 30000,
             minChunks: 1,
-            maxAsyncRequests: 2,
-            maxInitialRequests: 2,
+            maxAsyncRequests: 5,
+            maxInitialRequests: 3,
             automaticNameDelimiter: '~',
             name: true,
             cacheGroups: {
@@ -121,15 +130,16 @@ module.exports = {
                     // 设置优先级，防止和自定义的公共代码提取时被覆盖，不进行打包
                     priority: 10    
                 },
-                // utils: { // 抽离自己写的公共代码，utils这个名字可以随意起
-                //     chunks: 'initial',
-                //     name: 'utils',  // 任意命名
-                //     minSize: 0    // 只要超出0字节就生成一个新包
-                // }
+                utils: { // 抽离自己写的公共代码，utils这个名字可以随意起
+                    chunks: 'initial',
+                    name: 'utils',  // 任意命名
+                    minSize: 2000    // 只要超出0字节就生成一个新包
+                }
             }
         }
     },
     plugins:[
+        
         new htmlPlugin({
             minify:{
                 removeAttributeQuotes:true
@@ -148,11 +158,13 @@ module.exports = {
         //     template:'./src/h2.html',
         //     chunks:['entry2','jquery']
         // }),
+
+        //分离css文件到指定文件夹
         new extractText('css/[name].css'),
-        // new webpack.optimization.minimize(),
         new purifyCssPlugin({
             paths:glob.sync(path.join(__dirname, 'src/*.html')),
         }),
+        //公共模块引用，模块内无需引用
         new webpack.ProvidePlugin({
             $:'jquery'
         }),
@@ -161,7 +173,7 @@ module.exports = {
             from:path.join(__dirname,'src/public'),
             to:'./public'
         }]),
-        new CleanWebpackPlugin(),
+        // new CleanWebpackPlugin(),
         new VueLoaderPlugin(),
         new OptimizeCssAssetsPlugin({
             assetNameRegExp:/\.css$/g,
@@ -178,8 +190,18 @@ module.exports = {
         contentBase:path.resolve(__dirname,'dist'),
         host:'localhost',
         compress:true,
-        port:1717
+        port:1717,
+        proxy: {
+            '/api': {
+              target: 'http://localhost:1717/',
+              changeOrigin: true
+            }
+        }
     },
+    performance: {
+        hints: false
+    },
+    
     // mode:'development'
     mode:'production'
 }
